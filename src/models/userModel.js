@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema({
   },
   phone_number: {
     type: Number,
+    required: [true, "phone is required"],
     unique: [true, "Phone Number should be unique"],
   },
   full_name: { type: String, required: [true, "Full Name is required"] },

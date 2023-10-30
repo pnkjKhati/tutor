@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 const { status } = require("../../constants");
+const jwt = require("jsonwebtoken");
 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, phone_number, full_name, password, dob, user_name, gender } =
@@ -52,10 +53,44 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-const loginUser = (req, res) => {
+const loginUser = asyncHandler(async (req, res) => {
   const { body } = req;
-  console.log("Body::", body);
-  res.json("register user");
-};
+  try {
+    if (!(body.email || body.phone_number) || !body.password) {
+      res.status(400);
+      throw new Error("All fields are required");
+    } else {
+      let user;
+      if (body.email) {
+        const { email } = body;
+        user = await User.findOne({ email });
+      } else {
+        const { phone_number } = body;
+        user = await User.findOne({ phone_number });
+      }
+      const result = await bcrypt.compare(body.password, user.password);
+      if (!result) {
+        res.status(400);
+        throw new Error("Password is incorrect!");
+      }
+      const accessToken = jwt.sign(
+        { user: { username: user.user_name, email: user.email } },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: "15m",
+        }
+      );
+      res.status(status.SUCCESS).json({
+        statusCode: status.SUCCESS,
+        accessToken,
+        title: "Success",
+        message: "User logged in successfully!",
+      });
+    }
+  } catch (err) {
+    res.status(500);
+    throw new Error(err);
+  }
+});
 
 module.exports = { loginUser, registerUser };
