@@ -1,0 +1,10 @@
+const status = {
+  VALIDATION_ERROR: 400,
+  AUTHENTICATION_ERROR: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  SERVER_ERROR: 500,
+  CREATED: 201,
+  SUCCESS: 200,
+};
+module.exports = { status };
