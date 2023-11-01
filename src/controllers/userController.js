@@ -93,4 +93,24 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { loginUser, registerUser };
+const getUsers = asyncHandler(async (req, res) => {
+  try {
+    const users = await User.find({}, "-password");
+    if (users) {
+      res.status(status.SUCCESS).json({
+        statusCode: status.SUCCESS,
+        title: "Success",
+        message: "Users retrieve successfully!",
+        data: users,
+      });
+    } else {
+      res.status(500);
+      throw new Error("Users not found!");
+    }
+  } catch (err) {
+    res.status(500);
+    throw new Error(err.message);
+  }
+});
+
+module.exports = { loginUser, registerUser, getUsers };
