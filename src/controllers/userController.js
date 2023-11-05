@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 const { status } = require("../../constants");
 const jwt = require("jsonwebtoken");
+const { findByIdAndUpdate } = require("../models/otpModel");
 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, phone_number, full_name, password, dob, user_name, gender } =
@@ -80,6 +81,21 @@ const loginUser = asyncHandler(async (req, res) => {
           expiresIn: "15m",
         }
       );
+      let oldTokens = user.tokens || [];
+      if (oldTokens.length) {
+        oldTokens = oldTokens.filter((token) => {
+          const timeDiff = (Date.now() - parseInt(token.signedAt)) / 1000;
+          if (timeDiff < 900) {
+            return token;
+          }
+        });
+      }
+      await User.findByIdAndUpdate(user._id, {
+        tokens: [
+          ...oldTokens,
+          { accessToken, signedAt: Date.now().toString() },
+        ],
+      });
       res.status(status.SUCCESS).json({
         statusCode: status.SUCCESS,
         accessToken,
@@ -113,4 +129,24 @@ const getUsers = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { loginUser, registerUser, getUsers };
+const logOutUser = asyncHandler(async (req, res) => {
+  console.log("here not coomee=====>>>>>");
+  try {
+    const accessToken = req.headers.authorization;
+    const tokens = req.user.tokens;
+    const newTokens = tokens.filter((t) => {
+      return t.accessToken !== accessToken;
+    });
+    await User.findByIdAndUpdate(req.user._id, { tokens: newTokens });
+    res.status(status.SUCCESS).json({
+      statusCode: status.SUCCESS,
+      title: "Success",
+      message: "LogOut successfully!",
+    });
+  } catch (error) {
+    res.status(401);
+    throw new Error(error.message);
+  }
+});
+
+module.exports = { loginUser, registerUser, getUsers, logOutUser };

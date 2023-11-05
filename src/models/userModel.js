@@ -19,6 +19,7 @@ const UserSchema = new mongoose.Schema({
   dob: { type: Date },
   user_name: { type: String },
   gender: { type: String },
+  tokens: [{ type: Object }],
 });
 
 module.exports = mongoose.model("User", UserSchema);
